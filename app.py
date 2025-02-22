@@ -2,26 +2,51 @@ import pandas as pd
 import streamlit as st
 import joblib
 
-model = joblib.load('xgb_model.jb')
+# Load the trained model
+house_price_model = joblib.load('xgb_model.jb')
 
-st.title("House Price Prediction")
-st.write("Enter the Details Below to predict the Price")
+# Streamlit app title and instructions
+st.title("🏡 House Price Prediction")
+st.write("Enter the details below to predict the house price.")
 
-inputs=['OverallQual', 'GrLivArea', 'GarageArea', '1stFlrSF',
-       'FullBath', 'YearBuilt', 'YearRemodAdd', 'MasVnrArea', 'Fireplaces',
-       'BsmtFinSF1', 'LotFrontage', 'WoodDeckSF', 'OpenPorchSF', 'LotArea',
-       'CentralAir']
+# Dictionary mapping technical feature names to user-friendly names
+feature_labels = {
+    'OverallQual': 'Overall Quality (1-10)',
+    'GrLivArea': 'Above Ground Living Area (sq ft)',
+    'GarageArea': 'Garage Area (sq ft)',
+    '1stFlrSF': 'First Floor Area (sq ft)',
+    'FullBath': 'Number of Full Bathrooms',
+    'YearBuilt': 'Year Built',
+    'YearRemodAdd': 'Year of Last Remodel',
+    'MasVnrArea': 'Masonry Veneer Area (sq ft)',
+    'Fireplaces': 'Number of Fireplaces',
+    'BsmtFinSF1': 'Finished Basement Area (sq ft)',
+    'LotFrontage': 'Lot Frontage (feet)',
+    'WoodDeckSF': 'Wood Deck Area (sq ft)',
+    'OpenPorchSF': 'Open Porch Area (sq ft)',
+    'LotArea': 'Lot Area (sq ft)',
+    'CentralAir': 'Has Central Air Conditioning'
+}
 
-input_data = {}
-for features in inputs:
-    if features == 'CentralAir':
-        input_data[features] = st.selectbox(f"{features}", options=['Yes','No'], index=0)
+# Dictionary to store user inputs
+user_inputs = {}
+
+# Collect user inputs
+for feature, label in feature_labels.items():
+    if feature == 'CentralAir':
+        user_inputs[feature] = st.selectbox(f"{label}", options=['Yes', 'No'], index=0)
     else:
-        input_data[features] = st.number_input(f"{features}",value=0.0,step=1.0 if features in ['OverallQual','FullBath','Fireplaces'] else 0.1
+        user_inputs[feature] = st.number_input(
+            f"{label}:", value=0.0, 
+            step=1.0 if feature in ['OverallQual', 'FullBath', 'Fireplaces'] else 0.1
         )
 
-if st.button("Predict Price"):
-    input_data['CentralAir'] =1 if input_data['CentralAir'] == "Yes" else 0
+# Button to trigger prediction
+if st.button("🔍 Predict Price"):
+    user_inputs['CentralAir'] = 1 if user_inputs['CentralAir'] == "Yes" else 0
 
-    predictions = model.predict(pd.DataFrame([input_data],columns=inputs))
-    st.success(f"Predicted House Price: ${predictions[0]:,.2f}")
+    # Convert inputs to DataFrame and make a prediction
+    prediction = house_price_model.predict(pd.DataFrame([user_inputs], columns=feature_labels.keys()))
+
+    # Display predicted house price
+    st.success(f"🏠 Estimated House Price: **${prediction[0]:,.2f}**")
